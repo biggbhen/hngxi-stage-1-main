@@ -3,7 +3,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.get('/api/hello', async (req, res) => {
-	const visitor = req.query.visitor || 'Guest';
+	const visitor = req.query.name || 'Guest';
 	const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 	const location = 'Turkey';
 	const temperature = '28°C';
