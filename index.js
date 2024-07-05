@@ -22,7 +22,6 @@ app.get('/api/hello', async (req, res) => {
 			const { country, city, lat, lon } = locationData;
 			const location = `${city}, ${country}`;
 
-			// Fetch weather data from OpenWeatherMap
 			const weatherResponse = await axios.get(
 				'http://api.openweathermap.org/data/2.5/weather',
 				{
@@ -37,7 +36,6 @@ app.get('/api/hello', async (req, res) => {
 			const weatherData = weatherResponse.data;
 			const temperature = `${weatherData.main.temp}°C`;
 
-			// Respond with gathered information
 			res.json({
 				client_ip: clientIp,
 				location,
@@ -46,7 +44,6 @@ app.get('/api/hello', async (req, res) => {
 				greeting: `Hello, ${visitor}! The temperature is ${temperature} in ${location}.`,
 			});
 		} else {
-			// Respond with a message if location lookup fails
 			res.status(404).json({
 				client_ip: clientIp,
 				location: 'Unknown',
