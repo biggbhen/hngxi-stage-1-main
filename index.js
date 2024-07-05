@@ -1,20 +1,70 @@
 const express = require('express');
+const axios = require('axios');
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = 5000;
+
+const API_KEY = '159e4a4ecdb6ae9d6d6c91e457aa0e7d';
 
 app.get('/api/hello', async (req, res) => {
-	const visitor = req.query.name || 'Guest';
+	const visitor = req.query.visitor_name || 'Guest';
 	const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-	const location = 'Turkey';
-	const temperature = '28°C';
 
-	res.json({
-		client_ip: clientIp,
-		location,
-		greeting: `Hello, ${visitor}!, the temperature is ${temperature} degrees Celsius in ${location}`,
-	});
+	try {
+		// Fetch location data from ip-api.com
+		const locationResponse = await axios.get(
+			`http://ip-api.com/json/${clientIp}`
+		);
+		const locationData = locationResponse.data;
+
+		console.log(clientIp);
+
+		if (locationData.status === 'success') {
+			const { country, city, lat, lon } = locationData;
+			const location = `${city}, ${country}`;
+
+			// Fetch weather data from OpenWeatherMap
+			const weatherResponse = await axios.get(
+				'http://api.openweathermap.org/data/2.5/weather',
+				{
+					params: {
+						lat,
+						lon,
+						appid: API_KEY,
+						units: 'metric',
+					},
+				}
+			);
+			const weatherData = weatherResponse.data;
+			const temperature = `${weatherData.main.temp}°C`;
+
+			// Respond with gathered information
+			res.json({
+				client_ip: clientIp,
+				location,
+				latitude: lat,
+				longitude: lon,
+				greeting: `Hello, ${visitor}! The temperature is ${temperature} in ${location}.`,
+			});
+		} else {
+			// Respond with a message if location lookup fails
+			res.status(404).json({
+				client_ip: clientIp,
+				location: 'Unknown',
+				greeting: `Hello, ${visitor}!`,
+				error: locationData.message,
+			});
+		}
+	} catch (error) {
+		console.error('Error occurred:', error);
+
+		// Respond with an error message
+		res.status(500).json({
+			error:
+				'An error occurred while processing your request. Please try again later.',
+		});
+	}
 });
 
-app.listen(port, () => {
-	console.log(`Server is running at http://localhost:${port}`);
+app.listen(PORT, () => {
+	console.log(`Server running on port ${PORT}`);
 });
